@@ -24,6 +24,13 @@ public class Application {
     }
 
     public static void main(String[] args) {
+        // Check if the country with code "USA" exists
+        Country existingCountry = findCountryByCode("USA");
+        if (existingCountry != null) {
+            System.out.printf("%nCountry with code 'USA' already exists. Deleting the existing record...%n");
+            delete(existingCountry);
+        }
+        // Now save the country
         Country country = new CountryBuilder("USA","United States")
                 .withInternetUsers(46.2)
                 .withAdultLiteracyRate(78.89)
@@ -32,7 +39,8 @@ public class Application {
 
         // Display a list of countries before the update
         System.out.printf("%n%nBefore update%n%n");
-        fetchAllCountries().stream().forEach(System.out::println);
+        //fetchAllCountries().stream().forEach(System.out::println);
+        displayFormattedCountries();
 
         // Get the persisted country
         Country c = findCountryByCode(savedCountry);
@@ -47,7 +55,8 @@ public class Application {
 
         // Display a list of countries after the update
         System.out.printf("%nAfter update%n");
-        fetchAllCountries().stream().forEach(System.out::println);
+        //fetchAllCountries().stream().forEach(System.out::println);
+        displayFormattedCountries();
 
         // Get the country with code of the USA
         c = findCountryByCode("USA");
@@ -57,7 +66,8 @@ public class Application {
         delete(c);
         System.out.printf("%nDeleted!%n");
         System.out.printf("%nAfter delete%n");
-        fetchAllCountries().stream().forEach(System.out::println);
+//        fetchAllCountries().stream().forEach(System.out::println);
+        displayFormattedCountries();
     }
 
     private static Country findCountryByCode(String code) {
@@ -127,6 +137,34 @@ public class Application {
             List<Country> countries = session.createQuery(criteria).getResultList();
 
             return countries;
+        }
+    }
+
+    private static void displayFormattedCountries() {
+        List<Country> countries = fetchAllCountries();
+
+        // Print the header
+        System.out.println("----------------------------------------------------------------------------------");
+        System.out.println("                                 COUNTRY DATA                                     ");
+        System.out.println("----------------------------------------------------------------------------------");
+        System.out.printf("%-10s %-30s %-20s %-20s%n", "CODE", "NAME", "INTERNET USERS (%)", "ADULT LITERACY RATE (%)");
+        System.out.println("----------------------------------------------------------------------------------");
+
+        // Print each country in a formatted row
+        for (Country country : countries) {
+            String internetUsers = country.getInternetUsers() != null
+                    ? String.format("%.2f", country.getInternetUsers())
+                    : "--";
+
+            String adultLiteracyRate = country.getAdultLiteracyRate() != null
+                    ? String.format("%.2f", country.getAdultLiteracyRate())
+                    : "--";
+
+            System.out.printf("%-10s %-30s %-20s %-20s%n",
+                    country.getCode(),
+                    country.getName(),
+                    internetUsers,
+                    adultLiteracyRate);
         }
     }
 
