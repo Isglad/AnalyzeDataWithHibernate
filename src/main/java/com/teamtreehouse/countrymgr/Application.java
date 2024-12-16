@@ -11,14 +11,15 @@ import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.service.ServiceRegistry;
 
-import java.security.PrivateKey;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.Scanner;
 
 public class Application {
     // Hold a reusable reference to a SessionFactory (since we need only one)
     private static final SessionFactory sessionFactory = buildSessionFactory();
+    private static final Scanner scanner = new Scanner(System.in);
 
     private static SessionFactory buildSessionFactory() {
         // Create a StandardServiceRegistry
@@ -28,7 +29,7 @@ public class Application {
 
     public static void main(String[] args) {
         // Check if the country with code "USA" exists
-        Country existingCountry = findCountryByCode("USA");
+        Country existingCountry = fetchCountryByCode("USA");
         if (existingCountry != null) {
             System.out.printf("%nCountry with code 'USA' already exists. Deleting the existing record...%n");
             delete(existingCountry);
@@ -48,7 +49,7 @@ public class Application {
         displayStatistics();
 
         // Get the persisted country
-        Country c = findCountryByCode(savedCountry);
+        Country c = fetchCountryByCode(savedCountry);
 
         // Update the country
         c.setName("United States of America");
@@ -66,7 +67,7 @@ public class Application {
         displayStatistics();
 
         // Get the country with code of the USA
-        c = findCountryByCode("USA");
+        c = fetchCountryByCode("USA");
 
         // Delete the country
         System.out.printf("%nDeleting...%n");
@@ -79,7 +80,7 @@ public class Application {
         displayStatistics();
     }
 
-    private static Country findCountryByCode(String code) {
+    private static Country fetchCountryByCode(String code) {
         // Open a session
         Session session = sessionFactory.openSession();
 
@@ -226,6 +227,76 @@ public class Application {
         } else {
             System.out.println(" No data available.");
         }
+    }
+
+    // Method to edit an existing country's data
+    private static void editCountry() {
+        String countryCode = getValidCountryCode();
+
+        // Fetch the existing country by code
+        Country country = fetchCountryByCode(countryCode);
+
+        if(country == null) {
+            System.out.println("Country with code " + countryCode + " not found.");
+            return;
+        }
+
+        // Display current country data
+        System.out.println("Current data: ");
+        displayFormattedCountries(); // Show current data for editing
+
+        // Prompt user for new values
+        System.out.print("Enter new country name (Current: " + country.getName() + "): ");
+        String newCountryName = scanner.nextLine().trim();
+
+        Double newInternetUsers = getValidDoubleInput("Enter new percentage of internet users (Current: " + country.getInternetUsers() + "): ");
+
+        Double newAdultLiteracyRate = getValidDoubleInput("Enter new adult literacy rate (Current: " + country.getAdultLiteracyRate() + "): ");
+
+        country.setName(newCountryName);
+        country.setInternetUsers(newInternetUsers);
+        country.setAdultLiteracyRate(newAdultLiteracyRate);
+
+        update(country);
+        System.out.println("Country updated successfully!");
+    }
+
+    private static String getValidCountryCode() {
+        String countryCode;
+        while(true) {
+            System.out.print("Enter country code (maximum 3 characters): ");
+            countryCode = scanner.nextLine().trim().toUpperCase();
+
+            // Validate the country code length
+            if (countryCode.length() > 3) {
+                System.out.println("Country code cannot exceed 3 characters. Please try again");
+            } else if (countryCode.isEmpty()) {
+                System.out.println("Country code cannot be empty. Please try again.");
+            } else {
+                break;
+            }
+        }
+        return countryCode;
+    }
+
+    private static Double getValidDoubleInput(String prompt) {
+        Double value = null;
+        while(true) {
+            System.out.print(prompt);
+            String input = scanner.nextLine().trim();
+
+            if (input.isEmpty()){
+                break; // Allow NULL values if the input is left blank
+            }
+
+            try {
+                value = Double.parseDouble(input);
+                break;
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid input. Please enter a valid number or leave bank if unknown.");
+            }
+        }
+        return value;
     }
 
     private static String save(Country country) {
