@@ -28,56 +28,7 @@ public class Application {
     }
 
     public static void main(String[] args) {
-        // Check if the country with code "USA" exists
-        Country existingCountry = fetchCountryByCode("USA");
-        if (existingCountry != null) {
-            System.out.printf("%nCountry with code 'USA' already exists. Deleting the existing record...%n");
-            delete(existingCountry);
-        }
-        // Now save the country
-        Country country = new CountryBuilder("USA","United States")
-                .withInternetUsers(46.2)
-                .withAdultLiteracyRate(78.89)
-                .build();
-        String savedCountry = save(country);
 
-        // Display a list of countries before the update
-        System.out.printf("%n%nBefore update%n%n");
-        //fetchAllCountries().stream().forEach(System.out::println);
-        displayFormattedCountries();
-
-        displayStatistics();
-
-        // Get the persisted country
-        Country c = fetchCountryByCode(savedCountry);
-
-        // Update the country
-        c.setName("United States of America");
-
-        // Persist the changes
-        System.out.printf("%nUpdating...%n");
-        update(c);
-        System.out.printf("%nUpdate complete!%n");
-
-        // Display a list of countries after the update
-        System.out.printf("%nAfter update%n");
-        //fetchAllCountries().stream().forEach(System.out::println);
-        displayFormattedCountries();
-
-        displayStatistics();
-
-        // Get the country with code of the USA
-        c = fetchCountryByCode("USA");
-
-        // Delete the country
-        System.out.printf("%nDeleting...%n");
-        delete(c);
-        System.out.printf("%nDeleted!%n");
-        System.out.printf("%nAfter delete%n");
-//        fetchAllCountries().stream().forEach(System.out::println);
-        displayFormattedCountries();
-
-        displayStatistics();
     }
 
     private static Country fetchCountryByCode(String code) {
@@ -228,6 +179,26 @@ public class Application {
             System.out.println(" No data available.");
         }
     }
+
+    // Method to create a new country
+    private void createCountry() {
+        String countryCode = getValidCountryCode();
+
+        System.out.print("Enter country name: ");
+        String countryName = scanner.nextLine().trim();
+
+        Double internetUsers = getValidDoubleInput("Enter percentage of internet users (or leave blank if unknown): ");
+        Double adultLiteracyRate = getValidDoubleInput("Enter percentage of adult literacy rate (or leave blank if unknown): ");
+
+        // Now create and save the new country to the database
+        Country country = new CountryBuilder(countryCode, countryName)
+                .withInternetUsers(internetUsers)
+                .withAdultLiteracyRate(adultLiteracyRate)
+                .build();
+        save(country);
+        System.out.println("Country created successfully!");
+    }
+
 
     // Method to edit an existing country's data
     private static void editCountry() {
