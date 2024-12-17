@@ -12,9 +12,10 @@ import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.service.ServiceRegistry;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Application {
-    // Hold a reusable reference to a SessionFactory (since we need only one)
+    // Only one SessionFactory is created for the entire application
     private static final SessionFactory sessionFactory = buildSessionFactory();
     private static final Scanner scanner = new Scanner(System.in);
 
@@ -35,44 +36,27 @@ public class Application {
             try {
                 choice = Integer.parseInt(input); // Parse input
             } catch (NumberFormatException e) {
-                System.out.println("Invalid input. Please enter a number between 1 and 7");
+                System.out.println("Invalid input. Please enter a number between 1 and 6");
                 continue; // Skip to the next iteration of the loop
             }
 
             switch (choice) {
                 case 1:
-                    createCountry();
-                    break;
-                case 2:
-                    System.out.printf("%nUpdating...%n");
-                    editCountry();
-                    System.out.println("Country updated successfully!");
-                    break;
-                case 3:
-                    System.out.printf("%nDeleting...%n");
-                    deleteCountry();
-                    System.out.println("Country deleted.");
-                    break;
-                case 4:
                     displayFormattedCountries();
                     break;
-                case 5:
-                    String countryCode = getValidCountryCode(true);
-                    Country country = fetchCountryByCode(countryCode);
-                    if(country != null) {
-                        System.out.println("\nCountry Details:");
-                        System.out.println("Code: " + country.getCode());
-                        System.out.println("Name: " + country.getName());
-                        System.out.println("Internet Users: " + country.getInternetUsers());
-                        System.out.println("Adult Literacy Rate: " + country.getAdultLiteracyRate());
-                    } else {
-                        System.out.println("No country found wiyh code: " + countryCode);
-                    }
-                    break;
-                case 6:
+                case 2:
                     displayStatistics();
                     break;
-                case 7:
+                case 3:
+                    createCountry();
+                    break;
+                case 4:
+                    editCountry();
+                    break;
+                case 5:
+                    deleteCountry();
+                    break;
+                case 6:
                     System.out.println("Exiting the application. Goodbye!");
                     running = false;
                     break;
@@ -80,83 +64,35 @@ public class Application {
                     System.out.println("Invalid choice. Please try again.");
             }
         }
-//        scanner.close(); // close the scanner when done
     }
 
     private static void displayMenu() {
         System.out.println("\n\nMenu:");
-        System.out.println("1. Create a new country");
-        System.out.println("2. Edit an existing country");
-        System.out.println("3. Delete a country");
-        System.out.println("4. View all countries");
-        System.out.println("5. View a country by code");
-        System.out.println("6. View statistics");
-        System.out.println("7. Exit");
+        System.out.println("1. Viewing data table");
+        System.out.println("2. Viewing statistics");
+        System.out.println("3. Adding a country");
+        System.out.println("4. Editing a country");
+        System.out.println("5. Deleting a country");
+        System.out.println("6. Exit");
         System.out.print("\nEnter your choice: ");
     }
 
     private static Country fetchCountryByCode(String code) {
-        // Open a session
-        Session session = sessionFactory.openSession();
-        // Retrieve the persistent object (or null if not found)
-        Country country = session.get(Country.class,code);
-        // Close the session
-        session.close();
-        // Return the object
-        return country;
+        Session session = sessionFactory.openSession();  // Open a session
+        Country country = session.get(Country.class,code); // Retrieve the persistent object (or null if not found)
+        session.close(); // Close the session
+        return country; // Return the object
     }
 
-    private static void delete(Country country) {
-        // Open a session
-        Session session = sessionFactory.openSession();
-
-        // Begin a transaction
-        session.beginTransaction();
-
-        // Use the session to update the country
-        session.delete(country);
-
-        // Commit the transaction
-        session.getTransaction().commit();
-
-        // Close the session
-        session.close();
-    }
-
-    private static void update(Country country) {
-        // Open a session
-        Session session = sessionFactory.openSession();
-
-        // Begin a transaction
-        session.beginTransaction();
-
-        // Use the session to update the country
-        session.update(country);
-
-        // Commit the transaction
-        session.getTransaction().commit();
-
-        // Close the session
-        session.close();
-    }
 
     @SuppressWarnings("unchecked")
     private static List<Country> fetchAllCountries() {
         try (Session session = sessionFactory.openSession()) {
-            // Create CriteriaBuilder
-            CriteriaBuilder builder = session.getCriteriaBuilder();
-
-            // Create CriteriaQuery
-            CriteriaQuery<Country> criteria = builder.createQuery(Country.class);
-
-            // Specify the root entity
-            Root<Country> root = criteria.from(Country.class);
-
-            // Select all countries
-            criteria.select(root);
-
-            // Execute the query
-            List<Country> countries = session.createQuery(criteria).getResultList();
+            CriteriaBuilder builder = session.getCriteriaBuilder(); // Create CriteriaBuilder
+            CriteriaQuery<Country> criteria = builder.createQuery(Country.class); // Create CriteriaQuery
+            Root<Country> root = criteria.from(Country.class); // Specify the root entity
+            criteria.select(root); // Select all countries
+            List<Country> countries = session.createQuery(criteria).getResultList(); // Execute the query
 
             return countries;
         }
@@ -264,11 +200,12 @@ public class Application {
 
         System.out.print("Enter country name: ");
         String countryName = scanner.nextLine().trim();
+        countryName = capitalizeWords(countryName); // Capitalize the country name
 
         Double internetUsers = getValidDoubleInput("Enter percentage of internet users (or leave blank if unknown): ");
         Double adultLiteracyRate = getValidDoubleInput("Enter percentage of adult literacy rate (or leave blank if unknown): ");
 
-        // Now create and save the new country to the database
+        // Create and save the new country to the database
         Country country = new CountryBuilder(countryCode, countryName)
                 .withInternetUsers(internetUsers)
                 .withAdultLiteracyRate(adultLiteracyRate)
@@ -281,33 +218,29 @@ public class Application {
     // Method to edit an existing country's data
     private static void editCountry() {
         String countryCode = getValidCountryCode(true);
-
-        // Fetch the existing country by code
-        Country country = fetchCountryByCode(countryCode);
+        Country country = fetchCountryByCode(countryCode); // Fetch the existing country by code
 
         if(country == null) {
             System.out.println("Country with code " + countryCode + " not found.");
             return;
         }
 
-        // Display current country data
         System.out.println("Current data: ");
         displayFormattedCountries(); // Show current data for editing
 
         // Prompt user for new values
         System.out.print("Enter new country name (Current: " + country.getName() + "): ");
         String newCountryName = scanner.nextLine().trim();
-
         Double newInternetUsers = getValidDoubleInput("Enter new percentage of internet users (Current: " + country.getInternetUsers() + "): ");
-
         Double newAdultLiteracyRate = getValidDoubleInput("Enter new adult literacy rate (Current: " + country.getAdultLiteracyRate() + "): ");
 
         country.setName(newCountryName);
         country.setInternetUsers(newInternetUsers);
         country.setAdultLiteracyRate(newAdultLiteracyRate);
 
+        System.out.printf("%nUpdating...%n");
         update(country);
-//        System.out.println("Country updated successfully!");
+        System.out.println("Country updated successfully!");
     }
 
     // Method to remove countries from a database
@@ -315,11 +248,38 @@ public class Application {
         String countryCode = getValidCountryCode(true);
         Country country = fetchCountryByCode(countryCode);
         if(country != null) {
+            System.out.printf("%nDeleting...%n");
             delete(country);
-//            System.out.println("Country deleted.");
+            System.out.println("Country deleted.");
         } else {
             System.out.println("Country not found.");
         }
+    }
+
+
+    private static void save(Country country) {
+        // Open a session
+       try (Session session = sessionFactory.openSession();){
+           session.beginTransaction();  // Begin a transaction
+           String code = (String) session.save(country); // Use the session to save the country
+           session.getTransaction().commit();
+       }
+    }
+
+    private static void update(Country country) {
+        Session session = sessionFactory.openSession(); // Open a session
+        session.beginTransaction(); // Begin a transaction
+        session.update(country); // Use the session to update the country
+        session.getTransaction().commit(); // Commit the transaction
+        session.close(); // Close the session
+    }
+
+    private static void delete(Country country) {
+        Session session = sessionFactory.openSession(); // Open a session
+        session.beginTransaction(); // Begin a transaction
+        session.delete(country); // Use the session to update the country
+        session.getTransaction().commit(); // Commit the transaction
+        session.close(); // Close the session
     }
 
     private static String getValidCountryCode(boolean shouldExist) {
@@ -367,27 +327,14 @@ public class Application {
         return value;
     }
 
-    private static void save(Country country) {
-        // Open a session
-       try (Session session = sessionFactory.openSession();){
-           session.beginTransaction();  // Begin a transaction
-           String code = (String) session.save(country); // Use the session to save the country
-           session.getTransaction().commit();
-       }
+    private static String capitalizeWords(String input) {
+        if(input == null || input.isEmpty()) {
+            return input;
+        }
+        // Split the input into words, capitalize each word, and join them back together
+        return Arrays.stream(input.split("\\s+"))
+                .map(word -> word.substring(0, 1).toUpperCase() + word.substring(1).toLowerCase())
+                .collect(Collectors.joining(" "));
     }
-}
 
-// main
-// displayMenu
-// createCountry
-// editCountry
-// deleteCountry
-// displayFormattedCountries
-// displayStatistics
-// getValidCountryCode
-// getValidDoubleInput
-// save
-// update
-// delete
-// fetchCountByCode
-// fetchAllCountries
+}

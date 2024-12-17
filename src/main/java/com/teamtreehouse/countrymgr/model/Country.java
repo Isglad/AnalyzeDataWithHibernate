@@ -1,7 +1,6 @@
 package com.teamtreehouse.countrymgr.model;
 
 import jakarta.persistence.*;
-import java.math.BigDecimal;
 
 @Entity
 public class Country {
