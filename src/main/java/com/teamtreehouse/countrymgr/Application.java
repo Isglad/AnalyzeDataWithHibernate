@@ -28,33 +28,49 @@ public class Application {
         boolean running = true;
         while (running) {
             displayMenu(); // Display the menu with options
-            int choice = scanner.nextInt(); // Get user choice
-            scanner.nextLine(); // Consume the newline character
+
+            String input = scanner.nextLine().trim(); // Read input and trim whitespace
+
+            int choice;
+            try {
+                choice = Integer.parseInt(input); // Parse input
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid input. Please enter a number between 1 and 7");
+                continue; // Skip to the next iteration of the loop
+            }
 
             switch (choice) {
                 case 1:
                     createCountry();
                     break;
                 case 2:
+                    System.out.printf("%nUpdating...%n");
                     editCountry();
+                    System.out.println("Country updated successfully!");
                     break;
                 case 3:
+                    System.out.printf("%nDeleting...%n");
                     deleteCountry();
+                    System.out.println("Country deleted.");
                     break;
                 case 4:
                     displayFormattedCountries();
                     break;
                 case 5:
-                    displayStatistics();
+                    fetchCountryByCode();
                     break;
                 case 6:
+                    displayStatistics();
+                    break;
+                case 7:
+                    System.out.println("Exiting the application. Goodbye!");
                     running = false;
                     break;
                 default:
                     System.out.println("Invalid choice. Please try again.");
             }
         }
-        scanner.close(); // close the scanner when done
+//        scanner.close(); // close the scanner when done
     }
 
     private static void displayMenu() {
@@ -63,22 +79,25 @@ public class Application {
         System.out.println("2. Edit an existing country");
         System.out.println("3. Delete a country");
         System.out.println("4. View all countries");
-        System.out.println("5. View statistics");
-        System.out.println("6. Exit");
+        System.out.println("5. View a country by code");
+        System.out.println("6. View statistics");
+        System.out.println("7. Exit");
         System.out.print("\nEnter your choice: ");
     }
 
-    private static Country fetchCountryByCode(String code) {
-        // Open a session
+    private static Country fetchCountryByCode() {
+        String code = getValidCountryCode(true); // Prompt a user to enter a valid country code
+        // Open a session and fetch the country using the code
         Session session = sessionFactory.openSession();
+        Country country = session.get(Country.class, code);
+        session.close(); // close the session
 
-        // Retrieve the persistent object (or null if not found)
-        Country country = session.get(Country.class,code);
-
-        // Close the session
-        session.close();
-
-        // Return the object
+        if (country != null) {
+            System.out.println("\nCountry found:");
+            System.out.println(country);
+        } else {
+            System.out.println("\nNo country found with the code: " + code);
+        }
         return country;
     }
 
@@ -236,7 +255,7 @@ public class Application {
 
     // Method to create a new country
     private static void createCountry() {
-        String countryCode = getValidCountryCode();
+        String countryCode = getValidCountryCode(false);
 
         System.out.print("Enter country name: ");
         String countryName = scanner.nextLine().trim();
@@ -256,10 +275,10 @@ public class Application {
 
     // Method to edit an existing country's data
     private static void editCountry() {
-        String countryCode = getValidCountryCode();
+        String countryCode = getValidCountryCode(true);
 
         // Fetch the existing country by code
-        Country country = fetchCountryByCode(countryCode);
+        Country country = fetchCountryByCode();
 
         if(country == null) {
             System.out.println("Country with code " + countryCode + " not found.");
@@ -283,36 +302,43 @@ public class Application {
         country.setAdultLiteracyRate(newAdultLiteracyRate);
 
         update(country);
-        System.out.println("Country updated successfully!");
+//        System.out.println("Country updated successfully!");
     }
 
-    // Method to remove countries from database
+    // Method to remove countries from a database
     private static void deleteCountry() {
-        String countryCode = getValidCountryCode();
-        Country country = fetchCountryByCode(countryCode);
+        String countryCode = getValidCountryCode(true);
+        Country country = fetchCountryByCode();
         if(country != null) {
             delete(country);
-            System.out.println("Country deleted.");
+//            System.out.println("Country deleted.");
         } else {
             System.out.println("Country not found.");
         }
     }
 
-    private static String getValidCountryCode() {
+    private static String getValidCountryCode(boolean shouldExist) {
         while(true) {
-//            if (scanner.hasNextLine()){
-//                scanner.nextLine(); // Clear any existing input
-//            }
             System.out.print("Enter the 3-letter country code (e.g., USA): ");
             String countryCode = scanner.nextLine().trim().toUpperCase(Locale.ENGLISH);
-            System.out.println("DEBUG: Entered country code: '" + countryCode + "'");
 
             // Validate that the code is exactly 3 uppercase letters
-            if (countryCode.matches("^[A_Z]{3}$")) {
-                return countryCode;
-            } else {
+            if (!countryCode.matches("^[A-Z]{3}$")) {
                 System.out.println("Invalid country code. Please enter exactly 3 letters (e.g., USA).");
+                continue;
             }
+            // Check if the country code already exists in the database or not based on the context
+            Country existingCountry = fetchCountryByCode();
+            if(shouldExist && existingCountry == null) {
+                System.out.println("Country code not found. Please enter an existing country code");
+                continue;
+            }
+
+            if (!shouldExist && existingCountry != null) {
+                System.out.println("Country code already exists. Please enter a unique country code.");
+                continue;
+            }
+            return countryCode;
         }
     }
 
