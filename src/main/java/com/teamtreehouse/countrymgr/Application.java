@@ -28,7 +28,47 @@ public class Application {
     }
 
     public static void main(String[] args) {
+        boolean running = true;
+        while (running) {
+            displayMenu(); // Display the menu with options
+            int choice = scanner.nextInt(); // Get user choice
+            scanner.nextLine(); // Consume the newline character
 
+            switch (choice) {
+                case 1:
+                    createCountry();
+                    break;
+                case 2:
+                    editCountry();
+                    break;
+                case 3:
+                    deleteCountry();
+                    break;
+                case 4:
+                    displayFormattedCountries();
+                    break;
+                case 5:
+                    displayStatistics();
+                    break;
+                case 6:
+                    running = false;
+                    break;
+                default:
+                    System.out.println("Invalid choice. Please try again.");
+            }
+        }
+        scanner.close(); // close the scanner when done
+    }
+
+    private static void displayMenu() {
+        System.out.println("\n\nMenu:");
+        System.out.println("1. Create a new country");
+        System.out.println("2. Edit an existing country");
+        System.out.println("3. Delete a country");
+        System.out.println("4. View all countries");
+        System.out.println("5. View statistics");
+        System.out.println("6. Exit");
+        System.out.print("\nEnter your choice: ");
     }
 
     private static Country fetchCountryByCode(String code) {
@@ -181,7 +221,7 @@ public class Application {
     }
 
     // Method to create a new country
-    private void createCountry() {
+    private static void createCountry() {
         String countryCode = getValidCountryCode();
 
         System.out.print("Enter country name: ");
@@ -282,22 +322,27 @@ public class Application {
         return value;
     }
 
-    private static String save(Country country) {
+    private static void save(Country country) {
         // Open a session
-        Session session = sessionFactory.openSession();
-
-        // Begin a transaction
-        session.beginTransaction();
-
-        // Use the session to save the country
-        String code = (String)session.save(country);
-
-        // Commit the transaction
-        session.getTransaction().commit();
-
-        // Close the session
-        session.close();
-
-        return code;
+       try (Session session = sessionFactory.openSession();){
+           session.beginTransaction();  // Begin a transaction
+           String code = (String) session.save(country); // Use the session to save the country
+           session.getTransaction().commit();
+       }
     }
 }
+
+// main
+// displayMenu
+// createCountry
+// editCountry
+// deleteCountry
+// displayFormattedCountries
+// displayStatistics
+// getValidCountryCode
+// getValidDoubleInput
+// save
+// update
+// delete
+// fetchCountByCode
+// fetchAllCountries
