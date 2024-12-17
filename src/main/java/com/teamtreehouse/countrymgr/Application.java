@@ -11,10 +11,7 @@ import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.service.ServiceRegistry;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
-import java.util.Scanner;
+import java.util.*;
 
 public class Application {
     // Hold a reusable reference to a SessionFactory (since we need only one)
@@ -171,19 +168,19 @@ public class Application {
 
     private static void displayStatistics() {
         List<Country> countries = fetchAllCountries();
-
         // Calculate stats for Internet Users
-        // Let's use stream() to process the list of countries
-        // Let's use filter() to ensure null values are skipped before calculating the statistics
-        // Since some values might be null,let's
-        // use Optional to avoid exceptions and check if the result is present before displaying.
-        Optional<Country> maxInternetUsers = countries.stream()
-                .filter(c -> c.getInternetUsers() != null)
+        Optional<Country> maxInternetUsers = countries.stream() // use stream() to process the list of countries
+                .filter(c -> c.getInternetUsers() != null) // use filter() to ensure null values are skipped before calculating the statistics
                 .max(Comparator.comparing(Country::getInternetUsers));
 
-        Optional<Country> minInternetUsers = countries.stream()
+        Optional<Country> minInternetUsers = countries.stream() // use Optional to avoid exceptions and check if the result is present before displaying.
                 .filter(c -> c.getInternetUsers() != null)
                 .min(Comparator.comparing(Country::getInternetUsers));
+        // Calculate average for Internet Users
+        OptionalDouble avgInternetUsers = countries.stream()
+                .filter(c -> c.getInternetUsers() != null)
+                .mapToDouble(Country::getInternetUsers)
+                .average();
 
         // Calculate stats for Adult Literacy Rate
         Optional<Country> maxLiteracyRate = countries.stream()
@@ -193,6 +190,11 @@ public class Application {
         Optional<Country> minLiteracyRate = countries.stream()
                 .filter(c -> c.getAdultLiteracyRate() != null)
                 .min(Comparator.comparing(Country::getAdultLiteracyRate));
+        // Calculate average for Internet Users
+        OptionalDouble avgLiteracyRate = countries.stream()
+                .filter(c -> c.getAdultLiteracyRate() != null)
+                .mapToDouble(Country::getAdultLiteracyRate)
+                .average();
 
         // Print Results
         System.out.println("\n========= Statistics =========\n");
@@ -208,6 +210,12 @@ public class Application {
             System.out.println(" No data available.");
         }
 
+        if (avgInternetUsers.isPresent()) {
+            System.out.printf(" Average: %.2f%%%n", avgInternetUsers.getAsDouble());
+        } else {
+            System.out.println(" Average: --");
+        }
+
         System.out.println("\nAdult Literacy Rate (%):");
         if (maxLiteracyRate.isPresent() && minLiteracyRate.isPresent()) {
             System.out.printf(" Maximum: %s - %.2f%%%n",
@@ -217,6 +225,12 @@ public class Application {
                     minLiteracyRate.get().getName(), minLiteracyRate.get().getAdultLiteracyRate());
         } else {
             System.out.println(" No data available.");
+        }
+
+        if (avgLiteracyRate.isPresent()) {
+            System.out.printf(" Average: %.2f%%%n", avgLiteracyRate.getAsDouble());
+        } else {
+            System.out.println(" Average: --");
         }
     }
 
