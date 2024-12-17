@@ -232,6 +232,18 @@ public class Application {
         System.out.println("Country updated successfully!");
     }
 
+    // Method to remove countries from database
+    private static void deleteCountry() {
+        String countryCode = getValidCountryCode();
+        Country country = fetchCountryByCode(countryCode);
+        if(country != null) {
+            delete(country);
+            System.out.println("Country deleted.");
+        } else {
+            System.out.println("Country not found.");
+        }
+    }
+
     private static String getValidCountryCode() {
         String countryCode;
         while(true) {
