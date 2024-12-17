@@ -299,21 +299,21 @@ public class Application {
     }
 
     private static String getValidCountryCode() {
-        String countryCode;
         while(true) {
-            System.out.print("Enter country code (maximum 3 characters): ");
-            countryCode = scanner.nextLine().trim().toUpperCase();
+//            if (scanner.hasNextLine()){
+//                scanner.nextLine(); // Clear any existing input
+//            }
+            System.out.print("Enter the 3-letter country code (e.g., USA): ");
+            String countryCode = scanner.nextLine().trim().toUpperCase(Locale.ENGLISH);
+            System.out.println("DEBUG: Entered country code: '" + countryCode + "'");
 
-            // Validate the country code length
-            if (countryCode.length() > 3) {
-                System.out.println("Country code cannot exceed 3 characters. Please try again");
-            } else if (countryCode.isEmpty()) {
-                System.out.println("Country code cannot be empty. Please try again.");
+            // Validate that the code is exactly 3 uppercase letters
+            if (countryCode.matches("^[A_Z]{3}$")) {
+                return countryCode;
             } else {
-                break;
+                System.out.println("Invalid country code. Please enter exactly 3 letters (e.g., USA).");
             }
         }
-        return countryCode;
     }
 
     private static Double getValidDoubleInput(String prompt) {
