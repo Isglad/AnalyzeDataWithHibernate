@@ -57,7 +57,17 @@ public class Application {
                     displayFormattedCountries();
                     break;
                 case 5:
-                    fetchCountryByCode();
+                    String countryCode = getValidCountryCode(true);
+                    Country country = fetchCountryByCode(countryCode);
+                    if(country != null) {
+                        System.out.println("\nCountry Details:");
+                        System.out.println("Code: " + country.getCode());
+                        System.out.println("Name: " + country.getName());
+                        System.out.println("Internet Users: " + country.getInternetUsers());
+                        System.out.println("Adult Literacy Rate: " + country.getAdultLiteracyRate());
+                    } else {
+                        System.out.println("No country found wiyh code: " + countryCode);
+                    }
                     break;
                 case 6:
                     displayStatistics();
@@ -85,19 +95,14 @@ public class Application {
         System.out.print("\nEnter your choice: ");
     }
 
-    private static Country fetchCountryByCode() {
-        String code = getValidCountryCode(true); // Prompt a user to enter a valid country code
-        // Open a session and fetch the country using the code
+    private static Country fetchCountryByCode(String code) {
+        // Open a session
         Session session = sessionFactory.openSession();
-        Country country = session.get(Country.class, code);
-        session.close(); // close the session
-
-        if (country != null) {
-            System.out.println("\nCountry found:");
-            System.out.println(country);
-        } else {
-            System.out.println("\nNo country found with the code: " + code);
-        }
+        // Retrieve the persistent object (or null if not found)
+        Country country = session.get(Country.class,code);
+        // Close the session
+        session.close();
+        // Return the object
         return country;
     }
 
@@ -278,7 +283,7 @@ public class Application {
         String countryCode = getValidCountryCode(true);
 
         // Fetch the existing country by code
-        Country country = fetchCountryByCode();
+        Country country = fetchCountryByCode(countryCode);
 
         if(country == null) {
             System.out.println("Country with code " + countryCode + " not found.");
@@ -308,7 +313,7 @@ public class Application {
     // Method to remove countries from a database
     private static void deleteCountry() {
         String countryCode = getValidCountryCode(true);
-        Country country = fetchCountryByCode();
+        Country country = fetchCountryByCode(countryCode);
         if(country != null) {
             delete(country);
 //            System.out.println("Country deleted.");
@@ -328,7 +333,7 @@ public class Application {
                 continue;
             }
             // Check if the country code already exists in the database or not based on the context
-            Country existingCountry = fetchCountryByCode();
+            Country existingCountry = fetchCountryByCode(countryCode);
             if(shouldExist && existingCountry == null) {
                 System.out.println("Country code not found. Please enter an existing country code");
                 continue;
